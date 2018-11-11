@@ -106,7 +106,7 @@ type Signature struct {
 
 type Subkey struct {
 	Algorithm   CryptographicAlgorithm
-	Signatures  map[string][]Signature
+	Signatures  map[string][]*Signature
 	Length      int
 	Created     time.Time
 	Expires     time.Time
@@ -121,7 +121,7 @@ type Subkey struct {
 }
 
 type Uid struct {
-	Signatures map[string][]Signature
+	Signatures map[string][]*Signature
 	Name       string
 	Created    time.Time
 	Expires    time.Time
@@ -129,8 +129,8 @@ type Uid struct {
 }
 
 type Certificate struct {
-	Subkeys []Subkey
-	Uids    []Uid
+	Subkeys []*Subkey
+	Uids    []*Uid
 }
 
 func (ca CryptographicAlgorithm) String() string {

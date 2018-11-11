@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-type byDate []Signature
+type byDate []*Signature
 
 func (s byDate) Len() int {
 	return len(s)
@@ -53,8 +53,8 @@ func parseTime(seq string) (rv time.Time) {
 // This monstrosity parses GnuPG's baroque machine-readable output
 // and constructs a slice of public certificates in no particular order.
 // It's implemented as essentially a really gross state machine.
-func makeKeys(keydump string) (rv []Certificate) {
-	rv = make([]Certificate, 0)
+func makeKeys(keydump string) (rv []*Certificate) {
+	rv = make([]*Certificate, 0)
 
 	// Regular expressions we'll be using to recognize different stanzas
 	// of output.
@@ -65,7 +65,7 @@ func makeKeys(keydump string) (rv []Certificate) {
 	fprrx, _ := regexp.Compile("^fpr:")
 	sigclsrx, _ := regexp.Compile("^([A-Fa-f0-9]+)([xl])(,\\d\\d)?$")
 
-	cert := Certificate{}
+	cert := &Certificate{}
 	lastSeen := 0 // 0 for subkeys, 1 for user IDs
 
 	for _, row := range strings.Split(keydump, "\n") {
@@ -95,9 +95,9 @@ func makeKeys(keydump string) (rv []Certificate) {
 			}
 
 			// And get ready for a new one to be read in.
-			cert = Certificate{
-				Subkeys: make([]Subkey, 0),
-				Uids:    make([]Uid, 0),
+			cert = &Certificate{
+				Subkeys: make([]*Subkey, 0),
+				Uids:    make([]*Uid, 0),
 			}
 			// do NOT continue, as we need to fall through to the
 			// next block
@@ -123,9 +123,9 @@ func makeKeys(keydump string) (rv []Certificate) {
 				curve = cols[16]
 			}
 
-			cert.Subkeys = append(cert.Subkeys, Subkey{
+			cert.Subkeys = append(cert.Subkeys, &Subkey{
 				Algorithm:   CryptographicAlgorithm{id: algo},
-				Signatures:  make(map[string][]Signature),
+				Signatures:  make(map[string][]*Signature),
 				Length:      length,
 				Created:     created,
 				Expires:     expires,
@@ -146,8 +146,8 @@ func makeKeys(keydump string) (rv []Certificate) {
 			lastSeen = 1
 			created := parseTime(cols[5])
 			expires := parseTime(cols[6])
-			cert.Uids = append(cert.Uids, Uid{
-				Signatures: make(map[string][]Signature),
+			cert.Uids = append(cert.Uids, &Uid{
+				Signatures: make(map[string][]*Signature),
 				Name:       strings.Replace(cols[9], "\\x3a", ":", -1),
 				Created:    created,
 				Expires:    expires,
@@ -173,7 +173,7 @@ func makeKeys(keydump string) (rv []Certificate) {
 			class := SignatureClass{id: int(class64)}
 			created := parseTime(cols[5])
 			expires := parseTime(cols[6])
-			sig := Signature{
+			sig := &Signature{
 				SigningAlgorithm: CryptographicAlgorithm{id: algo},
 				Id:               cols[4],
 				Created:          created,
@@ -220,8 +220,8 @@ func makeKeys(keydump string) (rv []Certificate) {
 
 // Synchronously populate a complete keyring and return a dict
 // that maps key IDs to certificates.
-func getKeyring(filter string) (map[string]Certificate, error) {
-	rv := make(map[string]Certificate)
+func getKeyring(filter string) (map[string]*Certificate, error) {
+	rv := make(map[string]*Certificate)
 	var gpg *exec.Cmd
 
 	gpgpath, ok := FindExecutable()
@@ -253,6 +253,7 @@ func getKeyring(filter string) (map[string]Certificate, error) {
 	if ok != nil {
 		return nil, errors.New("gpg read error")
 	}
+
 	for _, cert := range makeKeys(string(outputBytes)) {
 		rv[cert.Subkeys[0].Id] = cert
 	}

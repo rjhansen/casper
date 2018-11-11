@@ -60,7 +60,7 @@ func makeKeys(keydump string) (rv []*Certificate) {
 	// of output.
 	pubrx, _ := regexp.Compile("^(pub|sec):")
 	subrx, _ := regexp.Compile("^(sub|ssb):")
-	uidrx, _ := regexp.Compile("^uid:")
+	uidrx, _ := regexp.Compile("^(uid|uat):")
 	sigrx, _ := regexp.Compile("^(sig|rev):")
 	fprrx, _ := regexp.Compile("^fpr:")
 	sigclsrx, _ := regexp.Compile("^([A-Fa-f0-9]+)([xl])(,\\d\\d)?$")
